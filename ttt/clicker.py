@@ -16,9 +16,16 @@ max_open_browsers = 16
 browser_semaphore = Semaphore(max_open_browsers)
 
 proxies = [
-    {"host": "38.152.246.58", "port": "9709", "user": "NvuvDZ", "pass": "L2p8Ad"},
-    {"host": "213.226.78.43", "port": "8000", "user": "LDRxSP", "pass": "5sGbyN"},
-    # Добавьте другие прокси
+    {"host": "78.153.151.198", "port": "8000", "user": "ceLYF5", "pass": "EhJgu7"},
+    {"host": "138.124.186.154", "port": "8000", "user": "ceLYF5", "pass": "EhJgu7"},
+    {"host": "78.153.150.9", "port": "8000", "user": "ceLYF5", "pass": "EhJgu7"},
+    {"host": "78.153.150.138", "port": "8000", "user": "ceLYF5", "pass": "EhJgu7"},
+    {"host": "78.153.151.128", "port": "8000", "user": "ceLYF5", "pass": "EhJgu7"},
+    {"host": "80.66.72.95", "port": "8000", "user": "ceLYF5", "pass": "EhJgu7"},
+    {"host": "78.153.151.69", "port": "8000", "user": "ceLYF5", "pass": "EhJgu7"},
+    {"host": "78.153.150.222", "port": "8000", "user": "ceLYF5", "pass": "EhJgu7"},
+    {"host": "78.153.151.84", "port": "8000", "user": "ceLYF5", "pass": "EhJgu7"},
+    {"host": "78.153.150.50", "port": "8000", "user": "ceLYF5", "pass": "EhJgu7"},
 ]
 
 def get_random_proxy():
