@@ -93,17 +93,13 @@ def configure_selenium_with_proxy(proxy):
 
 def check_and_process_clicker_for_account(account):
     logger.info(f'Запуск обработки кликеров для аккаунта: {account.number}')
+    
     with browser_semaphore:
         clickers = Clicker.objects.filter(status='pending').exclude(completed_count=F('count')).select_for_update()
-
         proxy = get_random_proxy()
         selenium = configure_selenium_with_proxy(proxy)
 
         try:
-            selenium.open("https://www.wildberries.ru")
-
-            selenium.add_cookies(account.cookies)
-            selenium.set_token(account.token)
             processed_urls = AccountLog.objects.filter(account=account).values_list('url', flat=True)
             account_clickers = clickers.exclude(url__in=processed_urls)[:5]
 
@@ -114,10 +110,14 @@ def check_and_process_clicker_for_account(account):
             for clicker in account_clickers:
                 logger.info(f'Аккаунт {account.number} переходит по ссылке {clicker.url}')
 
-                # Обновляем куки перед каждым переходом
+                # Обновляем куки и токены перед каждым переходом по ссылке
+                selenium.add_cookies(account.cookies)
+                selenium.set_token(account.token)
+                
+                # Переход по ссылке и обработка кликера
                 process_clicker(selenium, account, clicker)
-                completed_count  = clicker.completed_count + 1
-                clicker.completed_count = completed_count
+                
+                clicker.completed_count += 1
                 clicker.save()
 
                 if clicker.completed_count >= clicker.count:
@@ -137,8 +137,7 @@ def process_clicker(selenium, account, clicker):
     from .models import AccountLog
 
     try:
-        # Обновляем куки перед каждым переходом
-        selenium.add_cookies(account.cookies)
+        # Переход по ссылке
         selenium.open(clicker.url)
 
         time.sleep(random.randint(3, 7))
@@ -153,7 +152,6 @@ def process_clicker(selenium, account, clicker):
 
     except Exception as e:
         logger.error(f"Ошибка при обработке кликера {clicker.url} для аккаунта {account.number}: {e}")
-
 
 # Функция плавного скроллинга страницы до конца
 def smooth_scroll(selenium, duration=2):
