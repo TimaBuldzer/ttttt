@@ -7,7 +7,6 @@ from apps.seleniumCore import Selenium
 from selenium import webdriver
 from django.utils import timezone
 from django.db.models import F
-from django.db import transaction
 import time
 import zipfile
 
@@ -34,6 +33,20 @@ def get_random_proxy():
 def configure_selenium_with_proxy(proxy):
     chrome_options = Options()
 
+    # Включение headless режима
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    
+    # Проверка данных прокси перед использованием
+    if not isinstance(proxy, dict):
+        logger.error(f"Неверный формат данных прокси: {proxy}")
+        raise ValueError("Ожидался словарь для прокси данных")
+    
+    logger.info(f"Используем прокси: {proxy}")
+    
+    # Создание расширения для прокси
     manifest_json = f"""
     {{
         "version": "1.0.0",
@@ -87,6 +100,7 @@ def configure_selenium_with_proxy(proxy):
 
     chrome_options.add_extension(pluginfile)
 
+    # Создание экземпляра Selenium с headless режимом
     selenium = Selenium()
     selenium.driver = webdriver.Chrome(options=chrome_options)
     return selenium
@@ -97,6 +111,15 @@ def check_and_process_clicker_for_account(account):
     with browser_semaphore:
         clickers = Clicker.objects.filter(status='pending').exclude(completed_count=F('count')).select_for_update()
         proxy = get_random_proxy()
+        
+        # Проверяем корректность данных аккаунта перед использованием
+        if not isinstance(account, dict) and not hasattr(account, 'cookies'):
+            logger.error(f"Неверные данные аккаунта: {account}")
+            raise ValueError("Ожидался объект с куки")
+
+        # Логируем данные перед запуском Selenium
+        logger.info(f"Прокси: {proxy}, Куки: {account.cookies}")
+        
         selenium = configure_selenium_with_proxy(proxy)
 
         try:
@@ -110,10 +133,16 @@ def check_and_process_clicker_for_account(account):
             for clicker in account_clickers:
                 logger.info(f'Аккаунт {account.number} переходит по ссылке {clicker.url}')
 
-                # Обновляем куки и токены перед каждым переходом по ссылке
+                # Открываем нужную страницу (товар/целевая ссылка)
+                selenium.open(clicker.url)
+
+                # Добавляем куки и токен после открытия страницы
                 selenium.add_cookies(account.cookies)
                 selenium.set_token(account.token)
-                
+
+                # Перезагружаем страницу, чтобы куки и токен применились
+                selenium.driver.refresh()
+
                 # Переход по ссылке и обработка кликера
                 process_clicker(selenium, account, clicker)
                 
@@ -137,7 +166,7 @@ def process_clicker(selenium, account, clicker):
     from .models import AccountLog
 
     try:
-        # Переход по ссылке
+        # Переход по ссылке (с учетом ранее добавленных куков)
         selenium.open(clicker.url)
 
         time.sleep(random.randint(3, 7))
