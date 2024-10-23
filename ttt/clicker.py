@@ -116,21 +116,20 @@ def configure_selenium_with_proxy(proxy):
     selenium.driver = webdriver.Chrome(options=chrome_options)
     return selenium
 
+import traceback
+
 def check_and_process_clicker_for_account(account):
     logger.info(f'Запуск обработки кликеров для аккаунта: {account.number}')
-    
+
     with browser_semaphore:
         clickers = Clicker.objects.filter(status='pending').exclude(completed_count=F('count')).select_for_update()
         proxy = get_random_proxy()
-        
+
         # Проверяем корректность данных аккаунта перед использованием
         if not isinstance(account, dict) and not hasattr(account, 'cookies'):
             logger.error(f"Неверные данные аккаунта: {account}")
-            raise ValueError("Ожидался объект с куки")
+            raise ValueError("Ожидался объект с куками")
 
-        # Логируем данные перед запуском Selenium
-        logger.info(f"Прокси: {proxy}, Куки: {account.cookies}")
-        
         selenium = configure_selenium_with_proxy(proxy)
 
         try:
@@ -138,7 +137,7 @@ def check_and_process_clicker_for_account(account):
             account_clickers = clickers.exclude(url__in=processed_urls)[:5]
 
             if not account_clickers:
-                logger.info(f'Для аккаунта {account.number} нет новых кликеров')
+                logger.info(f'Для аккаунта {account.number} нет новых кликеров!')
                 return
 
             for clicker in account_clickers:
@@ -156,7 +155,7 @@ def check_and_process_clicker_for_account(account):
 
                 # Переход по ссылке и обработка кликера
                 process_clicker(selenium, account, clicker)
-                
+
                 clicker.completed_count += 1
                 clicker.save()
 
@@ -167,11 +166,14 @@ def check_and_process_clicker_for_account(account):
                 time.sleep(random.randint(5, 10))
 
         except Exception as e:
-            logger.error(f'Ошибка обработки аккаунта {account.number}: {e}')
+            logger.error(f"Ошибка обработки аккаунта {account.number}: {e}")
+            # Добавляем вывод полного трейсбека
+            traceback.print_exc()
         finally:
             selenium.driver.quit()
 
-        logger.info(f'Завершение обработки кликеров для аккаунта {account.number}')
+    logger.info(f'Завершение обработки кликеров для аккаунта {account.number}')
+
 
 def process_clicker(selenium, account, clicker):
     from .models import AccountLog
