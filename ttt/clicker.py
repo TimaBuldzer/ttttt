@@ -15,17 +15,28 @@ max_open_browsers = 16
 browser_semaphore = Semaphore(max_open_browsers)
 
 proxies = [
-    {"host": "78.153.151.198", "port": "8000", "user": "ceLYF5", "pass": "EhJgu7"},
-    {"host": "138.124.186.154", "port": "8000", "user": "ceLYF5", "pass": "EhJgu7"},
-    {"host": "78.153.150.9", "port": "8000", "user": "ceLYF5", "pass": "EhJgu7"},
-    {"host": "78.153.150.138", "port": "8000", "user": "ceLYF5", "pass": "EhJgu7"},
-    {"host": "78.153.151.128", "port": "8000", "user": "ceLYF5", "pass": "EhJgu7"},
-    {"host": "80.66.72.95", "port": "8000", "user": "ceLYF5", "pass": "EhJgu7"},
-    {"host": "78.153.151.69", "port": "8000", "user": "ceLYF5", "pass": "EhJgu7"},
-    {"host": "78.153.150.222", "port": "8000", "user": "ceLYF5", "pass": "EhJgu7"},
-    {"host": "78.153.151.84", "port": "8000", "user": "ceLYF5", "pass": "EhJgu7"},
-    {"host": "78.153.150.50", "port": "8000", "user": "ceLYF5", "pass": "EhJgu7"},
+    {"host": "78.153.151.198", "port": "8000", "user": "ceLYFS", "pass": "EhJgu7"},
+    {"host": "138.124.186.154", "port": "8000", "user": "ceLYFS", "pass": "EhJgu7"},
+    {"host": "78.153.150.9", "port": "8000", "user": "ceLYFS", "pass": "EhJgu7"},
+    {"host": "78.153.150.138", "port": "8000", "user": "ceLYFS", "pass": "EhJgu7"},
+    {"host": "78.153.151.128", "port": "8000", "user": "ceLYFS", "pass": "EhJgu7"},
+    {"host": "80.66.72.95", "port": "8000", "user": "ceLYFS", "pass": "EhJgu7"},
+    {"host": "78.153.151.69", "port": "8000", "user": "ceLYFS", "pass": "EhJgu7"},
+    {"host": "78.153.150.222", "port": "8000", "user": "ceLYFS", "pass": "EhJgu7"},
+    {"host": "78.153.151.84", "port": "8000", "user": "ceLYFS", "pass": "EhJgu7"},
+    {"host": "78.153.150.50", "port": "8000", "user": "ceLYFS", "pass": "EhJgu7"},
+    {"host": "193.233.127.134", "port": "8000", "user": "sQtoD0", "pass": "JZE4CJ"},
+    {"host": "193.233.126.55", "port": "8000", "user": "sQtoD0", "pass": "JZE4CJ"},
+    {"host": "193.233.127.202", "port": "8000", "user": "sQtoD0", "pass": "JZE4CJ"},
+    {"host": "193.233.126.244", "port": "8000", "user": "sQtoD0", "pass": "JZE4CJ"},
+    {"host": "193.233.126.150", "port": "8000", "user": "sQtoD0", "pass": "JZE4CJ"},
+    {"host": "193.233.127.139", "port": "8000", "user": "sQtoD0", "pass": "JZE4CJ"},
+    {"host": "193.233.126.50", "port": "8000", "user": "sQtoD0", "pass": "JZE4CJ"},
+    {"host": "193.233.126.238", "port": "8000", "user": "sQtoD0", "pass": "JZE4CJ"},
+    {"host": "193.233.126.38", "port": "8000", "user": "sQtoD0", "pass": "JZE4CJ"},
+    {"host": "46.161.21.32", "port": "8000", "user": "sQtoD0", "pass": "JZE4CJ"}
 ]
+
 
 def get_random_proxy():
     return random.choice(proxies)
