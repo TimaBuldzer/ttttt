@@ -51,20 +51,20 @@ class WildberriesBot:
 class Command(BaseCommand):
     help = "Открывает сайт Wildberries, добавляет куки и токены, и оставляет браузер открытым для дальнейших правок"
 
-    def add_arguments(self, parser):
-        parser.add_argument('--token', type=str, help="Токен для авторизации")
-        parser.add_argument('--cookies', type=str, help="Список куки в формате JSON строки")
-
     def handle(self, *args, **kwargs):
-        # Получаем токен и куки из аргументов команды
-        token = kwargs['token']
-        cookies = eval(kwargs['cookies']) if kwargs['cookies'] else []
+        # Задаем куки и токен непосредственно в коде
+        cookies = [
+            {"name": "cookie_name", "value": "cookie_value", "path": "/", "secure": True},
+            # Добавьте другие куки по аналогии
+        ]
+        token = "your_token_value"  # Замените на ваш токен
 
+        # Инициализируем и запускаем бота
         bot = WildberriesBot(cookies=cookies, token=token)
         bot.open_site()
         bot.add_cookies()
         bot.set_token()
         bot.refresh_and_check()
 
-        # Браузер останется открытым, чтобы пользователь мог внести правки вручную
+        # Браузер остается открытым для внесения правок
         print("Браузер останется открытым для внесения правок. Закройте его вручную, когда закончите.")
