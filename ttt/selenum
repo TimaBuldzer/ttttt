@@ -1,70 +1,100 @@
-import time
-from django.core.management.base import BaseCommand
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+def check_and_process_clicker_for_account(account):
+    logger.info(f'Запуск обработки кликеров для аккаунта: {account.number}')
 
-class WildberriesBot:
-    def __init__(self, cookies, token, headless=False):
-        chrome_options = Options()
-        if headless:
-            chrome_options.add_argument("--headless")
-            chrome_options.add_argument("--disable-gpu")
-        
-        self.driver = webdriver.Chrome(options=chrome_options)
-        self.cookies = cookies
-        self.token = token
+    with browser_semaphore:
+        # Получаем список всех активных кликеров и прокси для аккаунта
+        clickers = Clicker.objects.filter(status='pending').exclude(completed_count=F('count')).select_for_update()
+        proxy = get_random_proxy()
 
-    def open_site(self):
-        # Открываем сайт Wildberries
-        self.driver.get("https://www.wildberries.ru")
-        time.sleep(2)  # Даем время странице загрузиться
+        # Проверяем корректность данных аккаунта перед использованием
+        if not hasattr(account, 'cookies') or not account.token:
+            logger.error(f"Неверные данные аккаунта: {account}")
+            raise ValueError("Отсутствуют куки или токен у аккаунта")
 
-    def add_cookies(self):
-        # Добавляем куки в браузер
-        self.driver.delete_all_cookies()  # Очищаем все куки для чистого старта
-        for cookie in self.cookies:
-            selenium_cookie = {
-                'name': cookie['name'],
-                'value': cookie['value'],
-                'path': cookie.get('path', '/'),
-                'secure': cookie.get('secure', False),
-                'httpOnly': cookie.get('httpOnly', False),
-                'domain': '.wildberries.ru'  # Указываем домен, если он необходим
-            }
-            self.driver.add_cookie(selenium_cookie)
-        print("Куки успешно добавлены")
-        time.sleep(1)
+        # Настраиваем Selenium с прокси
+        selenium = configure_selenium_with_proxy(proxy)
+        selenium.driver.minimize_window()  # Сворачиваем окно браузера для удобства
 
-    def set_token(self):
-        # Устанавливаем токен в localStorage
-        self.driver.execute_script(
-            f"window.localStorage.setItem('wbx__tokenData', JSON.stringify({{'token': '{self.token}'}}));"
-        )
-        print("Токен успешно добавлен")
-        time.sleep(1)
+        try:
+            # Находим все URL из AccountLog, по которым аккаунт уже прошел
+            processed_urls = set(AccountLog.objects.filter(account=account).values_list('url', flat=True))
 
-    def refresh_and_check(self):
-        # Обновляем страницу, чтобы применить куки и токен
-        self.driver.refresh()
-        time.sleep(2)  # Даем время на обновление
+            # Отфильтровываем кликеры, по которым аккаунт еще не прошел
+            account_clickers = [clicker for clicker in clickers if clicker.url not in processed_urls]
 
-class Command(BaseCommand):
-    help = "Открывает сайт Wildberries, добавляет куки и токены, и оставляет браузер открытым для дальнейших правок"
+            if not account_clickers:
+                logger.info(f'Для аккаунта {account.number} нет новых кликеров')
+                return
 
-    def handle(self, *args, **kwargs):
-        # Задаем куки и токен непосредственно в коде
-        cookies = [
-            {"name": "cookie_name", "value": "cookie_value", "path": "/", "secure": True},
-            # Добавьте другие куки по аналогии
-        ]
-        token = "your_token_value"  # Замените на ваш токен
+            # Открываем первую ссылку и выполняем процесс кликов в одном браузере
+            for clicker in account_clickers:
+                logger.info(f'Аккаунт {account.number} переходит по ссылке {clicker.url}')
+                
+                # Переход на ссылку
+                selenium.open(clicker.url)
+                time.sleep(5)  # Даем странице время загрузиться
 
-        # Инициализируем и запускаем бота
-        bot = WildberriesBot(cookies=cookies, token=token)
-        bot.open_site()
-        bot.add_cookies()
-        bot.set_token()
-        bot.refresh_and_check()
+                # Добавляем куки и токен, если еще не были добавлены
+                selenium.add_cookies(account.cookies)
+                selenium.set_token(account.token)
+                
+                # Перезагружаем страницу, чтобы применить куки и токен
+                selenium.driver.refresh()
+                time.sleep(5)
 
-        # Браузер остается открытым для внесения правок
-        print("Браузер останется открытым для внесения правок. Закройте его вручную, когда закончите.")
+                # Выполняем кликер-логику
+                process_clicker(selenium, account, clicker)
+                
+                # Обновляем счетчик выполненных кликеров
+                clicker.completed_count += 1
+                clicker.save()
+
+                # Обновляем статус кликера, если он завершен
+                if clicker.completed_count >= clicker.count:
+                    clicker.status = 'completed'
+                    clicker.save()
+
+                # Записываем в лог, что аккаунт прошел по этой ссылке
+                AccountLog.objects.create(account=account, url=clicker.url, date=timezone.now())
+                
+                # Пауза перед следующим переходом
+                time.sleep(random.randint(5, 10))
+
+        except Exception as e:
+            logger.error(f'Ошибка обработки аккаунта {account.number}: {e}')
+        finally:
+            # Закрываем браузер после прохождения по всем ссылкам
+            selenium.quit()
+
+
+
+
+@app.task
+def check_pending_clickers_task():
+    """
+    Основная задача, которая запускает обработку всех аккаунтов параллельно.
+    """
+    accounts_with_unprocessed_clickers = []
+    accounts = Account.objects.all()  # Получаем все аккаунты
+
+    for account in accounts:
+        processed_urls = set(AccountLog.objects.filter(account=account).values_list('url', flat=True))
+        has_unprocessed_clickers = Clicker.objects.filter(status='pending').exclude(completed_count=F('count')).exclude(url__in=processed_urls).exists()
+        if has_unprocessed_clickers:
+            accounts_with_unprocessed_clickers.append(account)
+    if not accounts_with_unprocessed_clickers:
+        logger.info('Нет аккаунтов с непройденными кликерами')
+        return
+
+    with ThreadPoolExecutor(max_workers=16) as executor:
+        futures = []
+        for account in accounts_with_unprocessed_clickers:
+            # Запускаем параллельную задачу для каждого аккаунта
+            futures.append(executor.submit(check_and_process_clicker_for_account, account))
+        for future in concurrent.futures.as_completed(futures):
+            try:
+                future.result()
+            except Exception as exc:
+                logger.error(f"Задача сгенерировала исключение: {exc}")
+
+    logger.info('Все задачи по аккаунтам отправлены на обработку')
