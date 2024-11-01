@@ -1,4 +1,5 @@
 import time
+from django.core.management.base import BaseCommand
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
@@ -47,25 +48,23 @@ class WildberriesBot:
         self.driver.refresh()
         time.sleep(2)  # Даем время на обновление
 
-    def close(self):
-        # Закрываем браузер
-        self.driver.quit()
+class Command(BaseCommand):
+    help = "Открывает сайт Wildberries, добавляет куки и токены, и оставляет браузер открытым для дальнейших правок"
 
-# Пример использования
-if __name__ == "__main__":
-    # Замените на свои куки и токен
-    cookies = [
-        {"name": "cookie_name", "value": "cookie_value", "path": "/", "secure": True},
-        # Добавьте другие куки по аналогии
-    ]
-    token = "your_token_value"
+    def add_arguments(self, parser):
+        parser.add_argument('--token', type=str, help="Токен для авторизации")
+        parser.add_argument('--cookies', type=str, help="Список куки в формате JSON строки")
 
-    bot = WildberriesBot(cookies=cookies, token=token)
-    bot.open_site()
-    bot.add_cookies()
-    bot.set_token()
-    bot.refresh_and_check()
+    def handle(self, *args, **kwargs):
+        # Получаем токен и куки из аргументов команды
+        token = kwargs['token']
+        cookies = eval(kwargs['cookies']) if kwargs['cookies'] else []
 
-    # Оставляем браузер открытым на 10 секунд для проверки, затем закрываем
-    time.sleep(10)
-    bot.close()
+        bot = WildberriesBot(cookies=cookies, token=token)
+        bot.open_site()
+        bot.add_cookies()
+        bot.set_token()
+        bot.refresh_and_check()
+
+        # Браузер останется открытым, чтобы пользователь мог внести правки вручную
+        print("Браузер останется открытым для внесения правок. Закройте его вручную, когда закончите.")
