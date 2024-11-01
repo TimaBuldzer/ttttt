@@ -34,7 +34,17 @@ proxies = [
     {"host": "193.233.126.50", "port": "8000", "user": "sQtoD0", "pass": "JZE4CJ"},
     {"host": "193.233.126.238", "port": "8000", "user": "sQtoD0", "pass": "JZE4CJ"},
     {"host": "193.233.126.38", "port": "8000", "user": "sQtoD0", "pass": "JZE4CJ"},
-    {"host": "46.161.21.32", "port": "8000", "user": "sQtoD0", "pass": "JZE4CJ"}
+    {"host": "46.161.21.32", "port": "8000", "user": "sQtoD0", "pass": "JZE4CJ"},
+    {"host": "194.242.125.239", "port": "8000", "user": "b8yL45", "pass": "0wNLpG"},
+    {"host": "91.241.46.236", "port": "8000", "user": "b8yL45", "pass": "0wNLpG"},
+    {"host": "91.241.46.15", "port": "8000", "user": "b8yL45", "pass": "0wNLpG"},
+    {"host": "91.241.46.196", "port": "8000", "user": "b8yL45", "pass": "0wNLpG"},
+    {"host": "194.242.125.199", "port": "8000", "user": "b8yL45", "pass": "0wNLpG"},
+    {"host": "194.242.126.37", "port": "8000", "user": "b8yL45", "pass": "0wNLpG"},
+    {"host": "91.193.111.125", "port": "8000", "user": "b8yL45", "pass": "0wNLpG"},
+    {"host": "185.192.110.68", "port": "8000", "user": "b8yL45", "pass": "0wNLpG"},
+    {"host": "194.5.9.94", "port": "8000", "user": "b8yL45", "pass": "0wNLpG"},
+    {"host": "194.5.9.110", "port": "8000", "user": "b8yL45", "pass": "0wNLpG"}
 ]
 
 
