@@ -1,0 +1,71 @@
+import time
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+
+class WildberriesBot:
+    def __init__(self, cookies, token, headless=False):
+        chrome_options = Options()
+        if headless:
+            chrome_options.add_argument("--headless")
+            chrome_options.add_argument("--disable-gpu")
+        
+        self.driver = webdriver.Chrome(options=chrome_options)
+        self.cookies = cookies
+        self.token = token
+
+    def open_site(self):
+        # Открываем сайт Wildberries
+        self.driver.get("https://www.wildberries.ru")
+        time.sleep(2)  # Даем время странице загрузиться
+
+    def add_cookies(self):
+        # Добавляем куки в браузер
+        self.driver.delete_all_cookies()  # Очищаем все куки для чистого старта
+        for cookie in self.cookies:
+            selenium_cookie = {
+                'name': cookie['name'],
+                'value': cookie['value'],
+                'path': cookie.get('path', '/'),
+                'secure': cookie.get('secure', False),
+                'httpOnly': cookie.get('httpOnly', False),
+                'domain': '.wildberries.ru'  # Указываем домен, если он необходим
+            }
+            self.driver.add_cookie(selenium_cookie)
+        print("Куки успешно добавлены")
+        time.sleep(1)
+
+    def set_token(self):
+        # Устанавливаем токен в localStorage
+        self.driver.execute_script(
+            f"window.localStorage.setItem('wbx__tokenData', JSON.stringify({{'token': '{self.token}'}}));"
+        )
+        print("Токен успешно добавлен")
+        time.sleep(1)
+
+    def refresh_and_check(self):
+        # Обновляем страницу, чтобы применить куки и токен
+        self.driver.refresh()
+        time.sleep(2)  # Даем время на обновление
+
+    def close(self):
+        # Закрываем браузер
+        self.driver.quit()
+
+# Пример использования
+if __name__ == "__main__":
+    # Замените на свои куки и токен
+    cookies = [
+        {"name": "cookie_name", "value": "cookie_value", "path": "/", "secure": True},
+        # Добавьте другие куки по аналогии
+    ]
+    token = "your_token_value"
+
+    bot = WildberriesBot(cookies=cookies, token=token)
+    bot.open_site()
+    bot.add_cookies()
+    bot.set_token()
+    bot.refresh_and_check()
+
+    # Оставляем браузер открытым на 10 секунд для проверки, затем закрываем
+    time.sleep(10)
+    bot.close()
